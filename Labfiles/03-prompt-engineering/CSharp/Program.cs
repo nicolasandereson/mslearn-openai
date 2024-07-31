@@ -1,8 +1,6 @@
 ﻿// Implicit using statements are included
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
 using Azure;
 
 // Add Azure OpenAI package
@@ -18,6 +16,10 @@ string? oaiKey = config["AzureOAIKey"];
 string? oaiDeploymentName = config["AzureOAIDeploymentName"];
 
 bool printFullResponse = false;
+/// <summary>
+/// Pauses the application to allow changes to the system prompt, reads the updated system message from "system.txt",
+/// and processes user input to communicate with the OpenAI API. Continues until the user types 'quit'.
+/// </summary>
 
 do
 {
@@ -26,6 +28,9 @@ do
     Console.ReadKey();
 
     Console.WriteLine("\nUsing system message from system.txt");
+    /// <summary>
+    /// Reads the contents of the "system.txt" file and stores it in a string variable.
+    /// </summary>
     string systemMessage = System.IO.File.ReadAllText("system.txt");
     systemMessage = systemMessage.Trim();
 
@@ -47,6 +52,14 @@ do
         await GetResponseFromOpenAI(systemMessage, userMessage);
     }
 } while (true);
+
+/// <summary>
+/// Sends the system and user messages to the Azure OpenAI endpoint, retrieves the response,
+/// and prints the response to the console. Validates the configuration settings before making the request.
+/// </summary>
+/// <param name="systemMessage">The system message read from the "system.txt" file.</param>
+/// <param name="userMessage">The user message input from the console.</param>
+/// <returns>A Task representing the asynchronous operation.</returns>
 
 async Task GetResponseFromOpenAI(string systemMessage, string userMessage)
 {
