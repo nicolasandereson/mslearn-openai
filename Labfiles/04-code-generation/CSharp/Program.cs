@@ -1,8 +1,6 @@
 ﻿// Implicit using statements are included
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
 using Azure;
 
 // Add Azure OpenAI package
@@ -18,6 +16,14 @@ string? oaiDeploymentName = config["AzureOAIDeploymentName"];
 
 string command;
 bool printFullResponse = false;
+
+/// <summary>
+/// This function provides a console-based menu to the user, allowing them to select one of the following tasks:
+/// 1. Add comments to a function.
+/// 2. Write unit tests for a function.
+/// 3. Fix a Go Fish game.
+/// The user can also enter "quit" to exit the program. Based on the user's selection, the function reads the relevant code file, appends its content to the user's prompt, and sends it to an OpenAI service for further processing.
+/// </summary>
 
 do
 {
@@ -53,6 +59,13 @@ do
 
     await GetResponseFromOpenAI(userPrompt);
 } while (true);
+
+/// <summary>
+/// This asynchronous function interacts with Azure OpenAI to generate code based on a given prompt.
+/// It first checks for necessary configuration values, then sets up an OpenAI client and formats a request with system and user prompts.
+/// The response from Azure OpenAI is processed, optionally printed in full, saved to a file, and displayed in the console.
+/// </summary>
+/// <param name="prompt">The prompt to send to the Azure OpenAI service for code generation.</param>
 
 async Task GetResponseFromOpenAI(string prompt)
 {
