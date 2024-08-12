@@ -73,7 +73,7 @@ do
     // string completion = response.Choices[0].Message.Content;
     // Console.WriteLine("Response: " + completion + "\n");
 
-    // fot the code to work with the history 
+    // for the code to work with the history 
     // Add code to send request...
     // Build completion options object
     messagesList.Add(new ChatRequestUserMessage(inputText));
