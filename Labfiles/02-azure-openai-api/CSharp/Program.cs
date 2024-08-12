@@ -1,80 +1,105 @@
 ﻿// Implicit using statements are included
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using Azure;
 
 // Add Azure OpenAI package
 using Azure.AI.OpenAI;
 
 
-// Build the configuration object from the appsettings.json file
+// Build a config object and retrieve user settings.
 IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .Build();
-
-// Retrieve the Azure OpenAI endpoint from the configuration
 string? oaiEndpoint = config["AzureOAIEndpoint"];
-// Retrieve the Azure OpenAI key from the configuration
 string? oaiKey = config["AzureOAIKey"];
-// Retrieve the Azure OpenAI deployment name from the configuration
 string? oaiDeploymentName = config["AzureOAIDeploymentName"];
 
-// Check if any of the required configuration values are missing or empty
 if (string.IsNullOrEmpty(oaiEndpoint) || string.IsNullOrEmpty(oaiKey) || string.IsNullOrEmpty(oaiDeploymentName))
 {
-    // Print an error message and exit if any configuration values are missing
     Console.WriteLine("Please check your appsettings.json file for missing or incorrect values.");
     return;
 }
 
-// Initialize the Azure OpenAI client with the endpoint and key
+// Initialize the Azure OpenAI client
 OpenAIClient client = new OpenAIClient(new Uri(oaiEndpoint), new AzureKeyCredential(oaiKey));
 
-// Define a system message to provide context to the model
+// System message to provide context to the model
 string systemMessage = "I am a hiking enthusiast named Forest who helps people discover hikes in their area. If no area is specified, I will default to near Rainier National Park. I will then provide three suggestions for nearby hikes that vary in length. I will also share an interesting fact about the local nature on the hikes when making a recommendation.";
+
+// in order to add history
+
+// Initialize messages list
+var messagesList = new List<ChatRequestMessage>()
+ {
+     new ChatRequestSystemMessage(systemMessage),
+ };
 
 do
 {
-    // Prompt the user to enter their prompt text
     Console.WriteLine("Enter your prompt text (or type 'quit' to exit): ");
-    // Read the user's input
     string? inputText = Console.ReadLine();
-    // Exit the loop if the user types 'quit'
     if (inputText == "quit") break;
 
-    // Check if the user entered a prompt
+    // Generate summary from Azure OpenAI
     if (inputText == null)
     {
-        // Prompt the user to enter a prompt if none was provided
         Console.WriteLine("Please enter a prompt.");
         continue;
     }
 
-    // Inform the user that the request is being sent to the Azure OpenAI endpoint
     Console.WriteLine("\nSending request for summary to Azure OpenAI endpoint...\n\n");
 
-    // Build the completion options object for the request
+    // Add code to send request...
+    // // Build completion options object
+    // ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions()
+    // {
+    //     Messages =
+    //  {
+    //      new ChatRequestSystemMessage(systemMessage),
+    //      new ChatRequestUserMessage(inputText),
+    //  },
+    //     MaxTokens = 400,
+    //     Temperature = 0.7f,
+    //     DeploymentName = oaiDeploymentName
+    // };
+
+    // // Send request to Azure OpenAI model
+    // ChatCompletions response = client.GetChatCompletions(chatCompletionsOptions);
+
+    // // Print the response
+    // string completion = response.Choices[0].Message.Content;
+    // Console.WriteLine("Response: " + completion + "\n");
+
+    // fot the code to work with the history 
+    // Add code to send request...
+    // Build completion options object
+    messagesList.Add(new ChatRequestUserMessage(inputText));
+
     ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions()
     {
-        // Add the system message and user message to the request
-        Messages =
-        {
-            new ChatRequestSystemMessage(systemMessage),
-            new ChatRequestUserMessage(inputText),
-        },
-        // Set the maximum number of tokens for the response
-        MaxTokens = 400,
-        // Set the temperature for the response generation
+        MaxTokens = 1200,
         Temperature = 0.7f,
-        // Set the deployment name for the request
         DeploymentName = oaiDeploymentName
     };
 
-    // Send the request to the Azure OpenAI model and get the response
+    // Add messages to the completion options
+    foreach (ChatRequestMessage chatMessage in messagesList)
+    {
+        chatCompletionsOptions.Messages.Add(chatMessage);
+    }
+
+    // Send request to Azure OpenAI model
     ChatCompletions response = client.GetChatCompletions(chatCompletionsOptions);
 
-    // Get the content of the response message
+    // Return the response
     string completion = response.Choices[0].Message.Content;
-    // Print the response to the console
+
+    // Add generated text to messages list
+    messagesList.Add(new ChatRequestAssistantMessage(completion));
+
     Console.WriteLine("Response: " + completion + "\n");
 
-} while (true); // Continue the loop until the user types 'quit'
+} while (true);
